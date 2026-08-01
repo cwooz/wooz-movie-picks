@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wooz Movie Picks</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0b0c0a;
+    --bg-alt: #141510;
+    --bg-raised: #1b1c16;
+    --text: #e9e4d6;
+    --text-dim: #8f8a78;
+    --text-faint: #5c584c;
+    --amber: #d1a138;
+    --amber-bright: #e8bd54;
+    --red: #a8382c;
+    --rule: #2c2c25;
+    --sprocket: #232319;
+    --font-display: 'Oswald', sans-serif;
+    --font-mono: 'JetBrains Mono', monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    background-image:
+      radial-gradient(ellipse at top, rgba(209,161,56,0.05), transparent 60%),
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.012) 0px, rgba(255,255,255,0.012) 1px, transparent 1px, transparent 3px);
+    color: var(--text);
+    font-family: var(--font-mono);
+    -webkit-font-smoothing: antialiased;
+    padding: 0 56px;
+  }
+
+  @media (max-width: 720px) {
+    body { padding: 0 14px; }
+  }
+
+  /* sprocket rails */
+  .rail {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    width: 34px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    align-items: center;
+    z-index: 0;
+    pointer-events: none;
+  }
+  .rail.left { left: 10px; }
+  .rail.right { right: 10px; }
+  .rail .hole {
+    width: 14px;
+    height: 20px;
+    background: var(--sprocket);
+    border: 1px solid #050604;
+    border-radius: 3px;
+  }
+  @media (max-width: 900px) {
+    .rail { display: none; }
+  }
+
+  .wrap {
+    max-width: 760px;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* header / leader */
+  header {
+    padding: 90px 0 50px;
+    text-align: center;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 10px;
+  }
+
+  .leader-mark {
+    width: 84px;
+    height: 84px;
+    margin: 0 auto 28px;
+    border-radius: 50%;
+    border: 2px solid var(--amber);
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .leader-mark::before,
+  .leader-mark::after {
+    content: "";
+    position: absolute;
+    background: var(--amber);
+  }
+  .leader-mark::before { width: 2px; height: 100%; opacity: .5; }
+  .leader-mark::after { width: 100%; height: 2px; opacity: .5; }
+  .leader-mark span {
+    font-family: var(--font-display);
+    font-size: 26px;
+    color: var(--amber-bright);
+    position: relative;
+    background: var(--bg);
+    padding: 2px 8px;
+  }
+
+  .kicker {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.35em;
+    text-transform: uppercase;
+    color: var(--text-dim);
+    margin-bottom: 14px;
+  }
+
+  h1 {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(38px, 7vw, 64px);
+    letter-spacing: 0.01em;
+    text-transform: uppercase;
+    margin: 0 0 12px;
+    color: var(--text);
+    line-height: 1;
+  }
+  h1 em {
+    font-style: normal;
+    color: var(--amber-bright);
+  }
+
+  .subhead {
+    color: var(--text-dim);
+    font-size: 14px;
+    max-width: 480px;
+    margin: 0 auto;
+    line-height: 1.7;
+  }
+
+  .stamp {
+    display: inline-block;
+    margin-top: 26px;
+    padding: 6px 14px;
+    border: 1px solid var(--red);
+    color: var(--red);
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    transform: rotate(-2deg);
+    font-weight: 700;
+  }
+
+  /* add-a-film panel */
+  .add-panel {
+    padding: 22px 0 0;
+  }
+
+  .add-toggle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    background: var(--bg-raised);
+    border: 1px solid var(--rule);
+    color: var(--text-dim);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 12px 16px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: border-color .15s ease, color .15s ease;
+  }
+  .add-toggle:hover { color: var(--amber-bright); border-color: var(--amber); }
+  .add-toggle:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+  .add-toggle-icon {
+    font-family: var(--font-display);
+    font-size: 15px;
+    color: var(--amber);
+    transition: transform .2s ease;
+  }
+  .add-toggle[aria-expanded="true"] .add-toggle-icon { transform: rotate(45deg); }
+
+  .add-form {
+    margin-top: 10px;
+    padding: 20px 18px 18px;
+    background: var(--bg-raised);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+  }
+
+  .add-grid {
+    display: grid;
+    grid-template-columns: 90px 1fr 1fr;
+    gap: 14px 16px;
+  }
+  .add-field-title, .add-field-url { grid-column: 2 / 4; }
+
+  @media (max-width: 640px) {
+    .add-grid { grid-template-columns: 1fr 1fr; }
+    .add-field-year { grid-column: 1 / 3; max-width: 120px; }
+    .add-field-title, .add-field-url { grid-column: 1 / 3; }
+  }
+
+  .add-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .add-field span {
+    font-size: 10.5px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+  .add-field input {
+    background: var(--bg);
+    border: 1px solid var(--rule);
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    padding: 9px 10px;
+    border-radius: 2px;
+    outline: none;
+    transition: border-color .15s ease;
+  }
+  .add-field input:focus { border-color: var(--amber); }
+  .add-field input.invalid { border-color: var(--red); }
+
+  .add-error {
+    margin-top: 14px;
+    font-size: 12px;
+    color: var(--red);
+    font-family: var(--font-mono);
+  }
+
+  .add-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .add-submit, .add-download {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 10px 18px;
+    border-radius: 2px;
+    cursor: pointer;
+    transition: opacity .15s ease;
+  }
+  .add-submit {
+    background: var(--amber);
+    color: #14150f;
+    border: 1px solid var(--amber);
+    font-weight: 700;
+  }
+  .add-submit:hover { opacity: 0.85; }
+  .add-download {
+    background: transparent;
+    color: var(--text-dim);
+    border: 1px solid var(--rule);
+  }
+  .add-download:hover { color: var(--amber-bright); border-color: var(--amber); }
+
+  .add-toast {
+    font-size: 12px;
+    color: var(--amber-bright);
+    font-family: var(--font-mono);
+    margin-top: 10px;
+  }
+
+  /* table of contents */
+  nav.toc {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 18px;
+    justify-content: center;
+    padding: 26px 0 40px;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 10px;
+  }
+  nav.toc a {
+    color: var(--text-dim);
+    text-decoration: none;
+    font-size: 12px;
+    letter-spacing: 0.08em;
+    padding: 4px 2px;
+    border-bottom: 1px solid transparent;
+    transition: color .15s ease, border-color .15s ease;
+  }
+  nav.toc a:hover { color: var(--amber-bright); border-color: var(--amber); }
+
+  /* decade sections */
+  .decade {
+    padding: 56px 0 10px;
+    scroll-margin-top: 24px;
+  }
+
+  .decade-head {
+    display: flex;
+    align-items: baseline;
+    gap: 18px;
+    margin-bottom: 6px;
+  }
+
+  .decade-num {
+    font-family: var(--font-display);
+    font-size: clamp(46px, 9vw, 78px);
+    color: var(--amber);
+    line-height: 0.8;
+    font-weight: 700;
+  }
+
+  .decade-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .decade-label {
+    font-family: var(--font-display);
+    font-size: 20px;
+    letter-spacing: 0.08em;
+    color: var(--text);
+  }
+
+  .decade-count {
+    font-size: 11px;
+    color: var(--text-faint);
+    letter-spacing: 0.08em;
+  }
+
+  .decade-rule {
+    height: 1px;
+    background: linear-gradient(90deg, var(--rule), transparent);
+    margin: 18px 0 22px;
+  }
+
+  /* film ledger rows */
+  .ledger { border-top: 1px solid var(--rule); }
+
+  .film {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    column-gap: 18px;
+    row-gap: 7px;
+    align-items: baseline;
+    padding: 18px 4px;
+    border-bottom: 1px solid var(--rule);
+    transition: background .15s ease, border-color .15s ease;
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+  }
+  .film:hover { background: rgba(209,161,56,0.045); }
+  .film:hover .film-title { color: var(--amber-bright); }
+  .film:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+
+  .film-year {
+    grid-column: 1;
+    grid-row: 1;
+    font-size: 16px;
+    color: var(--amber);
+    font-weight: 500;
+    white-space: nowrap;
+  }
+
+  .film-title {
+    grid-column: 2;
+    grid-row: 1;
+    font-family: var(--font-display);
+    font-size: 24px;
+    letter-spacing: 0.01em;
+    color: var(--text);
+    text-transform: uppercase;
+    line-height: 1.2;
+  }
+
+  .film-meta {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: start;
+    display: flex;
+    flex-wrap: wrap;
+    column-gap: 24px;
+    row-gap: 4px;
+  }
+
+  .meta-item {
+    font-size: 13.5px;
+    color: var(--text-dim);
+    white-space: nowrap;
+  }
+
+  .meta-label {
+    color: var(--text-faint);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    font-size: 11px;
+    margin-right: 3px;
+  }
+
+  @media (max-width: 560px) {
+    .film { column-gap: 12px; row-gap: 5px; }
+    .film-year { font-size: 14px; }
+    .film-title { font-size: 20px; }
+    .meta-item { font-size: 12.5px; white-space: normal; }
+  }
+
+  footer {
+    text-align: center;
+    padding: 70px 0 90px;
+    color: var(--text-faint);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+  }
+  footer .end-mark {
+    display: inline-block;
+    font-family: var(--font-display);
+    font-size: 13px;
+    color: var(--text-dim);
+    letter-spacing: 0.3em;
+    margin-bottom: 10px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: color .15s ease;
+  }
+  footer .end-mark:hover { color: var(--amber-bright); }
+  footer .end-mark:focus-visible { outline: 2px solid var(--amber); outline-offset: 3px; }
+
+  ::selection { background: var(--amber); color: #14150f; }
+</style>
+</head>
+<body id="top">
+
+<div class="rail left" id="railLeft"></div>
+<div class="rail right" id="railRight"></div>
+
+<div class="wrap">
+
+  <header>
+    <div class="leader-mark"><span id="leaderCount">—</span></div>
+    <div class="kicker">Curated &nbsp;•&nbsp; Practical Stunts &nbsp;•&nbsp; True Craftsmanship</div>
+    <h1><em>Wooz</em> Movie Picks</h1>
+    <p class="subhead">Ten decades of films built on real sets, real stunts, and hands-on craftsmanship — long before digital shortcuts took over. Sorted by decade, then by year.</p>
+    <div class="stamp">Wooz — Verified</div>
+  </header>
+
+  <section class="add-panel">
+    <button type="button" class="add-toggle" id="addToggle" aria-expanded="false" aria-controls="addForm">
+      <span class="add-toggle-icon">+</span> Add a Film to the Archive
+    </button>
+    <form class="add-form" id="addForm" hidden>
+      <div class="add-grid">
+        <label class="add-field add-field-year">
+          <span>Year</span>
+          <input type="text" id="fYear" inputmode="numeric" maxlength="4" placeholder="1975" autocomplete="off">
+        </label>
+        <label class="add-field add-field-title">
+          <span>Title</span>
+          <input type="text" id="fTitle" maxlength="120" placeholder="Jaws" autocomplete="off">
+        </label>
+        <label class="add-field">
+          <span>Director</span>
+          <input type="text" id="fDirector" maxlength="80" placeholder="Steven Spielberg" autocomplete="off">
+        </label>
+        <label class="add-field">
+          <span>Starring</span>
+          <input type="text" id="fActor" maxlength="80" placeholder="Richard Dreyfuss" autocomplete="off">
+        </label>
+        <label class="add-field add-field-url">
+          <span>IMDb URL</span>
+          <input type="text" id="fImdb" maxlength="200" placeholder="https://www.imdb.com/title/tt0073195/" autocomplete="off">
+        </label>
+      </div>
+      <div class="add-error" id="addError" hidden></div>
+      <div class="add-actions">
+        <button type="submit" class="add-submit">Add Film</button>
+        <button type="button" class="add-download" id="downloadBtn">Download Updated Page</button>
+      </div>
+    </form>
+  </section>
+
+  <nav class="toc" id="toc"></nav>
+
+  <main id="decades"></main>
+
+  <footer>
+    <a class="end-mark" href="#top">— END OF REEL —</a>
+    <div id="filmCount"></div>
+  </footer>
+
+</div>
+
+<script>
+  const DATA = [
+    { decade: "1930's", films: [
+      ["1938", "Alexander Nevsky", "Sergei Eisenstein", "Nikolai Cherkasov", "tt0029850"],
+    ]},
+    { decade: "1940's", films: [
+      ["1941", "The Maltese Falcon", "John Huston", "Humphrey Bogart", "tt0033870"],
+    ]},
+    { decade: "1950's", films: [
+      ["1954", "Seven Samurai", "Akira Kurosawa", "Toshiro Mifune", "tt0047478"],
+      ["1956", "The Killing", "Stanley Kubrick", "Sterling Hayden", "tt0049406"],
+      ["1957", "Paths of Glory", "Stanley Kubrick", "Kirk Douglas", "tt0050825"],
+    ]},
+    { decade: "1960's", films: [
+      ["1960", "Psycho", "Alfred Hitchcock", "Anthony Perkins", "tt0054215"],
+      ["1960", "Spartacus", "Stanley Kubrick", "Kirk Douglas", "tt0054331"],
+      ["1961", "Yojimbo", "Akira Kurosawa", "Toshiro Mifune", "tt0055630"],
+      ["1961", "The Hustler", "Robert Rossen", "Paul Newman", "tt0054997"],
+      ["1962", "Lawrence of Arabia", "David Lean", "Peter O'Toole", "tt0056172"],
+      ["1963", "The Great Escape", "John Sturges", "Steve McQueen", "tt0057115"],
+      ["1963", "The Birds", "Alfred Hitchcock", "Tippi Hedren", "tt0056869"],
+      ["1966", "The Good, the Bad and the Ugly", "Sergio Leone", "Clint Eastwood", "tt0060196"],
+      ["1966", "Grand Prix", "John Frankenheimer", "James Garner", "tt0060472"],
+      ["1967", "Le Samouraï", "Jean-Pierre Melville", "Alain Delon", "tt0062229"],
+      ["1967", "The Dirty Dozen", "Robert Aldrich", "Lee Marvin", "tt0061578"],
+      ["1967", "Point Blank", "John Boorman", "Lee Marvin", "tt0062138"],
+      ["1968", "Bullitt", "Peter Yates", "Steve McQueen", "tt0062765"],
+      ["1968", "Once Upon a Time in the West", "Sergio Leone", "Henry Fonda", "tt0064116"],
+      ["1968", "Rosemary's Baby", "Roman Polanski", "John Cassavetes", "tt0063522"],
+      ["1969", "The Italian Job", "Peter Collinson", "Michael Caine", "tt0064505"],
+      ["1969", "Butch Cassidy and the Sundance Kid", "George Roy Hill", "Paul Newman & Robert Redford", "tt0064115"],
+    ]},
+    { decade: "1970's", films: [
+      ["1971", "Dirty Harry", "Don Siegel", "Clint Eastwood", "tt0066999"],
+      ["1971", "The French Connection", "William Friedkin", "Gene Hackman", "tt0067116"],
+      ["1971", "Vanishing Point", "Richard C. Sarafian", "Barry Newman", "tt0067959"],
+      ["1972", "The Godfather", "Francis Ford Coppola", "Marlon Brando", "tt0068646"],
+      ["1972", "The Getaway", "Sam Peckinpah", "Steve McQueen", "tt0068935"],
+      ["1973", "Serpico", "Sidney Lumet", "Al Pacino", "tt0070666"],
+      ["1973", "Mean Streets", "Martin Scorsese", "Harvey Keitel", "tt0070379"],
+      ["1973", "The Day of the Jackal", "Fred Zinnemann", "Edward Fox", "tt0070100"],
+      ["1973", "The Outfit", "John Flynn", "Robert Duvall", "tt0071960"],
+      ["1973", "The Last Detail", "Hal Ashby", "Jack Nicholson", "tt0070518"],
+      ["1974", "Chinatown", "Roman Polanski", "Jack Nicholson", "tt0071315"],
+      ["1974", "The Texas Chain Saw Massacre", "Tobe Hooper", "Marilyn Burns", "tt0072271"],
+      ["1974", "Death Wish", "Michael Winner", "Charles Bronson", "tt0071402"],
+      ["1975", "Jaws", "Steven Spielberg", "Richard Dreyfuss", "tt0073195"],
+      ["1975", "Hard Times", "Walter Hill", "Charles Bronson", "tt0073092"],
+      ["1976", "Taxi Driver", "Martin Scorsese", "Robert De Niro", "tt0075314"],
+      ["1977", "A Bridge Too Far", "Richard Attenborough", "Sean Connery", "tt0075784"],
+      ["1977", "Rolling Thunder", "John Flynn", "William Devane", "tt0076637"],
+      ["1977", "Sorcerer", "William Friedkin", "Roy Scheider", "tt0076740"],
+      ["1978", "The Inglorious Bastards", "Enzo G. Castellari", "Bo Svenson", "tt0076584"],
+      ["1979", "Alien", "Ridley Scott", "Sigourney Weaver", "tt0078748"],
+      ["1979", "Escape from Alcatraz", "Don Siegel", "Clint Eastwood", "tt0079116"],
+      ["1979", "Apocalypse Now", "Francis Ford Coppola", "Martin Sheen", "tt0078788"],
+      ["1979", "Mad Max", "George Miller", "Mel Gibson", "tt0079501"],
+    ]},
+    { decade: "1980's", films: [
+      ["1980", "The Shining", "Stanley Kubrick", "Jack Nicholson", "tt0081505"],
+      ["1980", "Shogun's Ninja", "Norifumi Suzuki", "Sonny Chiba", "tt0084674"],
+      ["1981", "Thief", "Michael Mann", "James Caan", "tt0083190"],
+      ["1981", "Blow Out", "Brian De Palma", "John Travolta", "tt0081900"],
+      ["1981", "Ms. 45", "Abel Ferrara", "Zoë Tamerlis", "tt0082776"],
+      ["1982", "Blade Runner", "Ridley Scott", "Harrison Ford", "tt0083658"],
+      ["1982", "The Thing", "John Carpenter", "Kurt Russell", "tt0084787"],
+      ["1982", "An Officer and a Gentleman", "Taylor Hackford", "Richard Gere", "tt0084434"],
+      ["1983", "Scarface", "Brian De Palma", "Al Pacino", "tt0086250"],
+      ["1984", "The Terminator", "James Cameron", "Arnold Schwarzenegger", "tt0088247"],
+      ["1985", "The Goonies", "Richard Donner", "Ensemble Cast", "tt0089218"],
+      ["1987", "Near Dark", "Kathryn Bigelow", "Bill Paxton", "tt0093605"],
+      ["1986", "Cobra", "George P. Cosmatos", "Sylvester Stallone", "tt0090857"],
+      ["1986", "Matador", "Pedro Almodóvar", "Antonio Banderas", "tt0091495"],
+      ["1986", "Big Trouble in Little China", "John Carpenter", "Kurt Russell", "tt0090728"],
+      ["1986", "Top Gun", "Tony Scott", "Tom Cruise", "tt0092099"],
+      ["1987", "City on Fire", "Ringo Lam", "Chow Yun-Fat", "tt0093435"],
+      ["1987", "Full Metal Jacket", "Stanley Kubrick", "Matthew Modine", "tt0093058"],
+      ["1987", "Lethal Weapon", "Richard Donner", "Mel Gibson", "tt0093409"],
+      ["1987", "Predator", "John McTiernan", "Arnold Schwarzenegger", "tt0093773"],
+      ["1988", "Die Hard", "John McTiernan", "Bruce Willis", "tt0095016"],
+      ["1989", "The Killer", "John Woo", "Chow Yun-Fat", "tt0097202"],
+      ["1989", "Born on the 4th of July", "Oliver Stone", "Tom Cruise", "tt0096969"],
+    ]},
+    { decade: "1990's", films: [
+      ["1990", "Goodfellas", "Martin Scorsese", "Ray Liotta", "tt0099685"],
+      ["1990", "Misery", "Rob Reiner", "James Caan", "tt0100157"],
+      ["1990", "King of New York", "Abel Ferrara", "Christopher Walken", "tt0099939"],
+      ["1991", "The Silence of the Lambs", "Jonathan Demme", "Anthony Hopkins", "tt0102926"],
+      ["1991", "The Last Boy Scout", "Tony Scott", "Bruce Willis", "tt0102508"],
+      ["1991", "Terminator 2: Judgment Day", "James Cameron", "Arnold Schwarzenegger", "tt0103064"],
+      ["1991", "JFK", "Oliver Stone", "Kevin Costner", "tt0102138"],
+      ["1991", "Point Break", "Kathryn Bigelow", "Keanu Reeves", "tt0102685"],
+      ["1992", "Unforgiven", "Clint Eastwood", "Clint Eastwood", "tt0105695"],
+      ["1992", "Hard Boiled", "John Woo", "Chow Yun-Fat", "tt0104684"],
+      ["1992", "A Few Good Men", "Rob Reiner", "Tom Cruise", "tt0104257"],
+      ["1992", "Reservoir Dogs", "Quentin Tarantino", "Ensemble Cast", "tt0105236"],
+      ["1992", "Bad Lieutenant", "Abel Ferrara", "Harvey Keitel", "tt0103759"],
+      ["1993", "Groundhog Day", "Harold Ramis", "Bill Murray", "tt0107048"],
+      ["1993", "Dazed and Confused", "Richard Linklater", "Ensemble Cast", "tt0106205"],
+      ["1993", "True Romance", "Tony Scott", "Christian Slater", "tt0108399"],
+      ["1993", "The Fugitive", "Andrew Davis", "Harrison Ford", "tt0106977"],
+      ["1994", "True Lies", "James Cameron", "Arnold Schwarzenegger", "tt0111503"],
+      ["1994", "Pulp Fiction", "Quentin Tarantino", "Ensemble Cast", "tt0110912"],
+      ["1995", "Seven", "David Fincher", "Brad Pitt", "tt0114369"],
+      ["1995", "Heat", "Michael Mann", "Robert De Niro & Al Pacino", "tt0113277"],
+      ["1995", "The Usual Suspects", "Bryan Singer", "Ensemble Cast", "tt0114814"],
+      ["1995", "Strange Days", "Kathryn Bigelow", "Ralph Fiennes", "tt0114558"],
+      ["1996", "Fargo", "Joel Coen", "Frances McDormand", "tt0116282"],
+      ["1996", "From Dusk Till Dawn", "Robert Rodriguez", "Ensemble Cast", "tt0116367"],
+      ["1996", "The Rock", "Michael Bay", "Sean Connery", "tt0117500"],
+      ["1996", "Swingers", "Doug Liman", "Jon Favreau", "tt0117765"],
+      ["1997", "Boogie Nights", "Paul Thomas Anderson", "Mark Wahlberg", "tt0118880"],
+      ["1997", "The Game", "David Fincher", "Michael Douglas", "tt0119174"],
+      ["1997", "Jackie Brown", "Quentin Tarantino", "Ensemble Cast", "tt0119396"],
+      ["1997", "L.A. Confidential", "Curtis Hanson", "Russell Crowe", "tt0119488"],
+      ["1998", "The Big Lebowski", "Joel Coen", "Jeff Bridges", "tt0118715"],
+      ["1998", "Fear and Loathing in Las Vegas", "Terry Gilliam", "Johnny Depp", "tt0120669"],
+      ["1998", "Enemy of the State", "Tony Scott", "Will Smith", "tt0120660"],
+      ["1999", "The Insider", "Michael Mann", "Al Pacino & Russell Crowe", "tt0140352"],
+      ["1999", "Fight Club", "David Fincher", "Edward Norton & Brad Pitt", "tt0137523"],
+      ["1999", "The Matrix", "Lana & Lilly Wachowski", "Keanu Reeves", "tt0133093"],
+      ["1999", "The Talented Mr. Ripley", "Anthony Minghella", "Matt Damon", "tt0134119"],
+    ]},
+    { decade: "2000's", films: [
+      ["2000", "American Psycho", "Mary Harron", "Christian Bale", "tt0144084"],
+      ["2001", "Black Hawk Down", "Ridley Scott", "Ensemble Cast", "tt0265086"],
+      ["2002", "Panic Room", "David Fincher", "Jodie Foster", "tt0258000"],
+      ["2003", "Kill Bill", "Quentin Tarantino", "Uma Thurman", "tt0266697"],
+      ["2004", "Collateral", "Michael Mann", "Tom Cruise", "tt0369339"],
+      ["2004", "Million Dollar Baby", "Clint Eastwood", "Hilary Swank", "tt0405159"],
+      ["2004", "Dawn of the Dead", "Zack Snyder", "Sarah Polley", "tt0363547"],
+      ["2006", "Apocalypto", "Mel Gibson", "Indigenous Cast", "tt0472043"],
+      ["2006", "The Departed", "Martin Scorsese", "Leonardo DiCaprio", "tt0407887"],
+      ["2007", "Zodiac", "David Fincher", "Jake Gyllenhaal", "tt0443706"],
+      ["2007", "No Country For Old Men", "Joel & Ethan Coen", "Josh Brolin", "tt0477348"],
+      ["2007", "There Will Be Blood", "Paul Thomas Anderson", "Daniel Day-Lewis", "tt0469494"],
+      ["2007", "Eastern Promises", "David Cronenberg", "Viggo Mortensen", "tt0765443"],
+      ["2008", "The Dark Knight", "Christopher Nolan", "Christian Bale", "tt0468569"],
+      ["2008", "Hurt Locker", "Kathryn Bigelow", "Jeremy Renner", "tt0887912"],
+      ["2009", "Inglourious Basterds", "Quentin Tarantino", "Ensemble Cast", "tt0361748"],
+    ]},
+    { decade: "2010's", films: [
+      ["2010", "The Town", "Ben Affleck", "Ben Affleck", "tt0840361"],
+      ["2010", "Outrage", "Takeshi Kitano", "Takeshi Kitano", "tt1462667"],
+      ["2011", "Drive", "Nicolas Winding Refn", "Ryan Gosling", "tt0780504"],
+      ["2012", "Django Unchained", "Quentin Tarantino", "Ensemble Cast", "tt1853728"],
+      ["2015", "The Hateful Eight", "Quentin Tarantino", "Ensemble Cast", "tt3460252"],
+      ["2015", "The Revenant", "Alejandro G. Iñárritu", "Leonardo DiCaprio", "tt1663202"],
+      ["2016", "The Nice Guys", "Shane Black", "Russell Crowe", "tt3799694"],
+      ["2017", "Hostiles", "Scott Cooper", "Christian Bale", "tt5013056"],
+      ["2017", "Wind River", "Taylor Sheridan", "Jeremy Renner", "tt5362988"],
+      ["2019", "Once Upon a Time... in Hollywood", "Quentin Tarantino", "Brad Pitt", "tt7131622"],
+      ["2019", "Ford v Ferrari", "James Mangold", "Christian Bale", "tt1950186"],
+      ["2019", "Uncut Gems", "Josh & Benny Safdie", "Adam Sandler", "tt5727208"],
+    ]},
+    { decade: "2020's", films: [
+      ["2022", "Top Gun: Maverick", "Joseph Kosinski", "Tom Cruise", "tt1745960"],
+      ["2023", "Silent Night", "John Woo", "Joel Kinnaman", "tt15799866"],
+    ]},
+  ];
+
+  function slug(s) { return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''); }
+
+  function escapeHtml(str) {
+    const d = document.createElement('div');
+    d.textContent = str;
+    return d.innerHTML;
+  }
+
+  const tocEl = document.getElementById('toc');
+  const decadesEl = document.getElementById('decades');
+
+  function renderAll() {
+    tocEl.innerHTML = '';
+    decadesEl.innerHTML = '';
+    let totalFilms = 0;
+
+    DATA.forEach((group) => {
+      const id = slug(group.decade);
+      totalFilms += group.films.length;
+
+      const a = document.createElement('a');
+      a.href = '#' + id;
+      a.textContent = group.decade;
+      tocEl.appendChild(a);
+
+      const section = document.createElement('section');
+      section.className = 'decade';
+      section.id = id;
+
+      const shortNum = group.decade.match(/\d+/) ? group.decade.match(/\d+/)[0].slice(-2) : '—';
+
+      section.innerHTML = `
+        <div class="decade-head">
+          <div class="decade-num">${shortNum}</div>
+          <div class="decade-meta">
+            <div class="decade-label">${group.decade}</div>
+            <div class="decade-count">${group.films.length} FILM${group.films.length === 1 ? '' : 'S'}</div>
+          </div>
+        </div>
+        <div class="decade-rule"></div>
+        <div class="ledger">
+          ${group.films.map(([year, title, director, actor, imdbId]) => `
+            <a class="film" href="https://www.imdb.com/title/${imdbId}/" target="_blank" rel="noopener">
+              <span class="film-year">${escapeHtml(year)}</span>
+              <span class="film-title">${escapeHtml(title)}</span>
+              <div class="film-meta">
+                <span class="meta-item"><span class="meta-label">Director:</span> ${escapeHtml(director)}</span>
+                <span class="meta-item"><span class="meta-label">Starring:</span> ${actor ? escapeHtml(actor) : '—'}</span>
+              </div>
+            </a>
+          `).join('')}
+        </div>
+      `;
+      decadesEl.appendChild(section);
+    });
+
+    document.getElementById('filmCount').textContent = totalFilms + ' TITLES ON FILE';
+    document.getElementById('leaderCount').textContent = totalFilms;
+  }
+
+  renderAll();
+
+  // sprocket rails
+  function buildRail(el) {
+    const count = Math.ceil(window.innerHeight / 34) + 2;
+    el.innerHTML = '';
+    for (let i = 0; i < count; i++) {
+      const d = document.createElement('div');
+      d.className = 'hole';
+      el.appendChild(d);
+    }
+  }
+  buildRail(document.getElementById('railLeft'));
+  buildRail(document.getElementById('railRight'));
+  window.addEventListener('resize', () => {
+    buildRail(document.getElementById('railLeft'));
+    buildRail(document.getElementById('railRight'));
+  });
+
+  // ---- Add-a-film panel ----
+  const addToggle = document.getElementById('addToggle');
+  const addForm = document.getElementById('addForm');
+  const addError = document.getElementById('addError');
+
+  addToggle.addEventListener('click', () => {
+    const isOpen = addToggle.getAttribute('aria-expanded') === 'true';
+    addToggle.setAttribute('aria-expanded', String(!isOpen));
+    addForm.hidden = isOpen;
+    if (!isOpen) document.getElementById('fYear').focus();
+  });
+
+  // Year field: digits only, max 4 chars, as you type
+  const fYear = document.getElementById('fYear');
+  fYear.addEventListener('input', () => {
+    fYear.value = fYear.value.replace(/\D/g, '').slice(0, 4);
+  });
+
+  function showError(msg, fieldEl) {
+    addError.textContent = msg;
+    addError.hidden = false;
+    document.querySelectorAll('.add-field input.invalid').forEach(el => el.classList.remove('invalid'));
+    if (fieldEl) fieldEl.classList.add('invalid');
+  }
+
+  function clearError() {
+    addError.hidden = true;
+    addError.textContent = '';
+    document.querySelectorAll('.add-field input.invalid').forEach(el => el.classList.remove('invalid'));
+  }
+
+  function decadeLabelForYear(year) {
+    const start = Math.floor(year / 10) * 10;
+    return start + "'s";
+  }
+
+  function addFilmToData(year, title, director, actor, imdbId) {
+    const label = decadeLabelForYear(year);
+    let group = DATA.find(g => g.decade === label);
+    if (!group) {
+      group = { decade: label, films: [] };
+      DATA.push(group);
+      DATA.sort((a, b) => parseInt(a.decade, 10) - parseInt(b.decade, 10));
+    }
+    group.films.push([String(year), title, director, actor, imdbId]);
+    group.films.sort((a, b) => parseInt(a[0], 10) - parseInt(b[0], 10));
+  }
+
+  addForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    clearError();
+
+    const fTitle = document.getElementById('fTitle');
+    const fDirector = document.getElementById('fDirector');
+    const fActor = document.getElementById('fActor');
+    const fImdb = document.getElementById('fImdb');
+
+    const year = fYear.value.trim();
+    const title = fTitle.value.trim();
+    const director = fDirector.value.trim();
+    const actor = fActor.value.trim();
+    const imdbUrl = fImdb.value.trim();
+
+    if (!year || !title || !director || !actor || !imdbUrl) {
+      showError('All fields are required.');
+      return;
+    }
+    if (!/^\d{4}$/.test(year)) {
+      showError('Year must be exactly 4 digits.', fYear);
+      return;
+    }
+    const yearNum = parseInt(year, 10);
+    const currentYear = new Date().getFullYear();
+    if (yearNum < 1888 || yearNum > currentYear + 2) {
+      showError(`Year should be between 1888 and ${currentYear + 2}.`, fYear);
+      return;
+    }
+    const imdbMatch = imdbUrl.match(/tt\d{7,9}/);
+    if (!imdbMatch) {
+      showError('IMDb URL should look like https://www.imdb.com/title/tt1234567/', fImdb);
+      return;
+    }
+
+    addFilmToData(yearNum, title, director, actor, imdbMatch[0]);
+    renderAll();
+
+    addForm.reset();
+    let toast = document.getElementById('addToast');
+    if (!toast) {
+      toast = document.createElement('div');
+      toast.id = 'addToast';
+      toast.className = 'add-toast';
+      addForm.appendChild(toast);
+    }
+    toast.textContent = `Added "${title}" (${year}) — don't forget to download the updated page to keep it.`;
+    setTimeout(() => { if (toast) toast.textContent = ''; }, 6000);
+  });
+
+  // ---- Download updated page ----
+  document.getElementById('downloadBtn').addEventListener('click', () => {
+    const doc = document.documentElement.cloneNode(true);
+    const dataScript = Array.from(doc.querySelectorAll('script')).find(s => s.textContent.includes('const DATA = ['));
+    if (dataScript) {
+      dataScript.textContent = dataScript.textContent.replace(
+        /const DATA = \[[\s\S]*?\n  \];/,
+        'const DATA = ' + JSON.stringify(DATA, null, 2).replace(/\n/g, '\n  ') + ';'
+      );
+    }
+    const html = '<!DOCTYPE html>\n' + doc.outerHTML;
+    const blob = new Blob([html], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'wooz-movie-picks-dynamic.html';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  });
+</script>
+
+</body>
+</html>
