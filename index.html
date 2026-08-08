@@ -165,7 +165,9 @@
 
   /* add-a-film panel */
   .add-panel {
-    padding: 22px 0 0;
+    padding: 22px 0;
+    border-bottom: 1px solid var(--rule);
+    margin-bottom: 10px;
   }
 
   .add-toggle {
@@ -283,6 +285,94 @@
     color: var(--amber-bright);
     font-family: var(--font-mono);
     margin-top: 10px;
+  }
+
+  /* search */
+  .search-panel {
+    padding: 26px 0 0;
+  }
+
+  .search-field {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--bg-raised);
+    border: 1px solid var(--rule);
+    border-radius: 3px;
+    padding: 0 12px;
+    transition: border-color .15s ease;
+  }
+  .search-field:focus-within { border-color: var(--amber); }
+
+  .search-icon {
+    flex: none;
+    width: 15px;
+    height: 15px;
+    fill: none;
+    stroke: var(--text-faint);
+    stroke-width: 2;
+    stroke-linecap: round;
+    transition: stroke .15s ease;
+  }
+  .search-field:focus-within .search-icon { stroke: var(--amber); }
+
+  .search-field input {
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    border: 0;
+    outline: none;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 13px;
+    padding: 11px 0;
+  }
+  .search-field input::placeholder { color: var(--text-faint); }
+  .search-field input::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .search-clear {
+    flex: none;
+    background: transparent;
+    border: 0;
+    color: var(--text-faint);
+    font-family: var(--font-display);
+    font-size: 20px;
+    line-height: 1;
+    padding: 4px 2px;
+    cursor: pointer;
+    transition: color .15s ease;
+  }
+  .search-clear:hover { color: var(--amber-bright); }
+  .search-clear:focus-visible { outline: 2px solid var(--amber); outline-offset: 2px; }
+
+  .search-status {
+    margin-top: 8px;
+    min-height: 15px;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text-faint);
+  }
+
+  .no-results {
+    padding: 70px 0 40px;
+    text-align: center;
+    color: var(--text-dim);
+    font-size: 13px;
+    line-height: 1.9;
+  }
+  .no-results strong {
+    display: block;
+    font-family: var(--font-display);
+    font-size: 22px;
+    font-weight: 500;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--text);
+    margin-bottom: 10px;
   }
 
   /* table of contents */
@@ -496,6 +586,18 @@
     </form>
   </section>
 
+  <section class="search-panel">
+    <div class="search-field">
+      <svg class="search-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+        <circle cx="10.5" cy="10.5" r="6.5"></circle>
+        <line x1="15.4" y1="15.4" x2="21" y2="21"></line>
+      </svg>
+      <input type="search" id="searchInput" placeholder="Search by title, director, or actor&hellip;" autocomplete="off" spellcheck="false" aria-label="Search films by title, director, or actor">
+      <button type="button" class="search-clear" id="searchClear" aria-label="Clear search" hidden>&times;</button>
+    </div>
+    <div class="search-status" id="searchStatus" role="status" aria-live="polite"></div>
+  </section>
+
   <nav class="toc" id="toc"></nav>
 
   <main id="decades"></main>
@@ -695,17 +797,45 @@
     return d.innerHTML;
   }
 
+  // ---- Search / filter state ----
+  // Terms are matched against title, director, and starring — case- and
+  // accent-insensitively, and every term must hit, so "mann heat" finds Heat.
+  let filterQuery = '';
+
+  function normalizeText(s) {
+    return s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
+  }
+
+  function filterTerms() {
+    return normalizeText(filterQuery.trim()).split(/\s+/).filter(Boolean);
+  }
+
+  function matchesTerms(film, terms) {
+    const hay = normalizeText([film[1], film[2], film[3] || ''].join(' '));
+    return terms.every(t => hay.includes(t));
+  }
+
   const tocEl = document.getElementById('toc');
   const decadesEl = document.getElementById('decades');
+  const searchInput = document.getElementById('searchInput');
+  const searchClear = document.getElementById('searchClear');
+  const searchStatus = document.getElementById('searchStatus');
 
   function renderAll() {
     tocEl.innerHTML = '';
     decadesEl.innerHTML = '';
+    const terms = filterTerms();
     let totalFilms = 0;
+    let shownFilms = 0;
 
     DATA.forEach((group) => {
       const id = slug(group.decade);
       totalFilms += group.films.length;
+
+      // A decade with no matches drops out of both the ledger and the TOC.
+      const films = terms.length ? group.films.filter(f => matchesTerms(f, terms)) : group.films;
+      if (!films.length) return;
+      shownFilms += films.length;
 
       const a = document.createElement('a');
       a.href = '#' + id;
@@ -723,12 +853,12 @@
           <div class="decade-num">${shortNum}</div>
           <div class="decade-meta">
             <div class="decade-label">${group.decade}</div>
-            <div class="decade-count">${group.films.length} FILM${group.films.length === 1 ? '' : 'S'}</div>
+            <div class="decade-count">${films.length} FILM${films.length === 1 ? '' : 'S'}</div>
           </div>
         </div>
         <div class="decade-rule"></div>
         <div class="ledger">
-          ${group.films.map(([year, title, director, actor, imdbId]) => `
+          ${films.map(([year, title, director, actor, imdbId]) => `
             <a class="film" href="https://www.imdb.com/title/${imdbId}/" target="_blank" rel="noopener">
               <span class="film-year">${escapeHtml(year)}</span>
               <span class="film-title">${escapeHtml(title)}</span>
@@ -743,8 +873,27 @@
       decadesEl.appendChild(section);
     });
 
-    document.getElementById('filmCount').textContent = totalFilms + ' TITLES ON FILE';
-    document.getElementById('leaderCount').textContent = totalFilms;
+    if (terms.length && !shownFilms) {
+      decadesEl.innerHTML = `
+        <div class="no-results">
+          <strong>No Matches</strong>
+          Nothing in the archive matches &ldquo;${escapeHtml(filterQuery.trim())}&rdquo;.<br>
+          Try a director, an actor, or part of a title.
+        </div>
+      `;
+    }
+
+    document.getElementById('filmCount').textContent = terms.length
+      ? shownFilms + ' OF ' + totalFilms + ' TITLES SHOWN'
+      : totalFilms + ' TITLES ON FILE';
+    document.getElementById('leaderCount').textContent = terms.length ? shownFilms : totalFilms;
+
+    // Driven from here so a freshly loaded page (including a downloaded copy,
+    // which clones the live DOM) always starts in the unfiltered state.
+    searchStatus.textContent = terms.length
+      ? shownFilms + (shownFilms === 1 ? ' MATCH' : ' MATCHES')
+      : '';
+    searchClear.hidden = !filterQuery;
   }
 
   renderAll();
@@ -765,6 +914,28 @@
     buildRail(document.getElementById('railLeft'));
     buildRail(document.getElementById('railRight'));
   });
+
+  // ---- Search ----
+  function clearSearch(refocus) {
+    searchInput.value = '';
+    filterQuery = '';
+    renderAll();
+    if (refocus) searchInput.focus();
+  }
+
+  searchInput.addEventListener('input', () => {
+    filterQuery = searchInput.value;
+    renderAll();
+  });
+
+  searchInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && searchInput.value) {
+      e.preventDefault();
+      clearSearch(true);
+    }
+  });
+
+  searchClear.addEventListener('click', () => clearSearch(true));
 
   // ---- Add-a-film panel ----
   const addToggle = document.getElementById('addToggle');
@@ -858,7 +1029,8 @@
     }
 
     addFilmToData(yearNum, title, director, actor, imdbMatch[0]);
-    renderAll();
+    // Drop any active filter, otherwise the new row lands in a hidden decade.
+    clearSearch(false);
 
     addForm.reset();
     let toast = document.getElementById('addToast');
