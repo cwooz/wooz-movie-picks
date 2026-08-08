@@ -9,14 +9,14 @@ Pages serves it automatically. Environment is Windows.
 
 ## Files
 
-- `index.html` — the live site. Must stay at the repo root so it serves at the
-  root URL. Includes a collapsible "Add a Film" form (validation + a "Download
-  Updated Page" button that re-serializes the DATA array into a fresh copy of
-  the page).
-- `wooz-movie-picks.html` — a static snapshot of the same site, without the
-  add-film form. Kept in sync with `index.html` for everything else.
+`index.html` is the entire site and the only file to edit. It must stay at the
+repo root so it serves at the root URL. It includes a collapsible "Add a Film"
+form (validation + a "Download Updated Page" button that re-serializes the DATA
+array into a fresh copy of the page).
 
-If a change affects both files, apply it to both unless told otherwise.
+A second file, `wooz-movie-picks.html`, previously existed as a static snapshot.
+It has been retired — git history serves that purpose. Do not recreate or
+restore it.
 
 ## Data conventions
 
