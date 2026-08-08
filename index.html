@@ -29,6 +29,29 @@
 
   html { scroll-behavior: smooth; }
 
+  /* scrollbar — WebKit/Blink gets the full treatment... */
+  ::-webkit-scrollbar { width: 9px; }
+  ::-webkit-scrollbar-track {
+    background: var(--bg-alt);
+    border-left: 1px solid var(--rule);
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--text-faint);
+    border-radius: 2px;
+  }
+  ::-webkit-scrollbar-thumb:hover { background: var(--amber); }
+  ::-webkit-scrollbar-thumb:active { background: var(--amber-bright); }
+  ::-webkit-scrollbar-button { display: none; }
+
+  /* ...Firefox gets the standard properties. Scoped so Chromium 121+, where
+     scrollbar-color would otherwise override the rules above, keeps them. */
+  @supports not selector(::-webkit-scrollbar) {
+    html {
+      scrollbar-width: thin;
+      scrollbar-color: var(--text-faint) var(--bg-alt);
+    }
+  }
+
   body {
     margin: 0;
     background: var(--bg);
